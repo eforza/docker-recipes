@@ -1,0 +1,62 @@
+version: '2'
+
+services:
+
+ postgres:
+  restart: unless-stopped
+  image: postgres:9.6.3
+  volumes:
+   - ./postgresql/data:/var/lib/postgresql/data
+
+  environment:
+   - POSTGRES_PASSWORD=T34mc1ty!
+   - POSTGRES_USER=teamcity
+   - POSTGRES_DB=teamcity
+  ports:
+   - "127.0.0.1:5433:5432"
+                                                                                
+ teamcity:
+  restart: unless-stopped
+  image: jetbrains/teamcity-server:2017.1.3
+  volumes:
+    - ./teamcity/data:/data/teamcity_server/datadir
+    - ./teamcity/logs:/opt/teamcity/logs
+  ports:
+   - "127.0.0.1:8111:8111"
+  environment:
+   - TEAMCITY_SERVER_MEM_OPTS=-Xmx2048m -XX:MaxPermSize=270m -XX:ReservedCodeCacheSize=350m
+
+ teamcity_agent1:
+  restart: unless-stopped
+  image: jetbrains/teamcity-agent:2017.1.3
+  links:
+   - teamcity:teamcity
+  volumes:
+   - ./teamcity/agents/001/conf:/data/teamcity_agent/conf
+   # Make docker and docker-compose form host accesible in container agent
+   - /var/run/docker.sock:/var/run/docker.sock
+   - /usr/local/bin/docker-compose:/bin/docker-compose
+  environment:
+   - SERVER_URL=teamcity:8111
+   - AGENT_NAME="tcagent_docker_001"
+ teamcity_agent2:
+  restart: unless-stopped
+  image: jetbrains/teamcity-agent:2017.1.3
+  links:
+   - teamcity:teamcity
+  volumes:
+   - ./teamcity/agents/002/conf:/data/teamcity_agent/conf
+  environment:
+   - SERVER_URL=teamcity:8111
+   - AGENT_NAME="tcagent_docker_002"
+
+ teamcity_agent3:
+  restart: unless-stopped
+  image: jetbrains/teamcity-agent:2017.1.3
+  links:
+   - teamcity:teamcity
+  volumes:
+   - ./teamcity/agents/003/conf:/data/teamcity_agent/conf
+  environment:
+   - SERVER_URL=teamcity:8111
+   - AGENT_NAME="tcagent_docker_003"
